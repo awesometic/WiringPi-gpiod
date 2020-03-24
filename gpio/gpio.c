@@ -196,10 +196,10 @@ static void doUnLoad (int UNU argc, char *argv [])
  */
 static void doI2Cdetect (UNU int argc, char *argv [])
 {
-	int model, rev, mem, maker, overVolted, port;
+	int model, rev, mem, maker, mode, port;
 	char *c, *command ;
 
-	piBoardId(&model, &rev, &mem, &maker, &overVolted);
+	piBoardId(&model, &rev, &mem, &maker, &mode);
 
 	switch (model) {
 	case MODEL_ODROID_C1:
@@ -686,9 +686,11 @@ void doRead (int argc, char *argv [])
 	pin = atoi (argv [2]) ;
 	val = digitalRead (pin) ;
 
-	printf ("%s\n", val == 0 ? "0" : "1") ;
+	if (val < 0)
+		msg(MSG_ERR, "Not available for pin %d\n", pin);
+	else
+		printf("%d\n", val);
 }
-
 
 /*
  * doAread:
@@ -821,7 +823,7 @@ static void doPwmClock (int argc, char *argv [])
  */
 static void doVersion (char *argv [])
 {
-	int model, rev, mem, maker, warranty ;
+	int model, rev, mem, maker, mode;
 	struct stat statBuf ;
 	char name [80] ;
 	FILE *fd ;
@@ -835,7 +837,7 @@ static void doVersion (char *argv [])
 	printf ("This is free software with ABSOLUTELY NO WARRANTY.\n") ;
 	printf ("For details type: %s -warranty\n", argv [0]) ;
 	printf ("\n") ;
-	piBoardId (&model, &rev, &mem, &maker, &warranty) ;
+	piBoardId (&model, &rev, &mem, &maker, &mode) ;
 
 	printf ("ODROID Board Details:\n") ;
 	printf ("  Type: %s, Revision: %s, Memory: %dMB\n" \
@@ -880,7 +882,6 @@ static void doVersion (char *argv [])
 int main (int argc, char *argv [])
 {
 	int i ;
-	struct stat statBuf ;
 
 	if (getenv ("WIRINGPI_DEBUG") != NULL) {
 		printf ("gpio: wiringPi debug mode enabled\n") ;
@@ -931,7 +932,7 @@ int main (int argc, char *argv [])
 		return 0 ;
 	}
 
-	if (geteuid () != 0 && stat("/dev/gpiomem", &statBuf) != 0) {
+	if (geteuid () != 0) {
 		fprintf (stderr, "%s: Must be root to run. Program should be suid root. This is an error.\n", argv [0]) ;
 		return 1 ;
 	}
@@ -947,10 +948,10 @@ int main (int argc, char *argv [])
 	if (strcasecmp (argv [1], "load"   ) == 0)	{ doLoad   (argc, argv) ; return 0 ; }
 	if (strcasecmp (argv [1], "unload" ) == 0)	{ doUnLoad (argc, argv) ; return 0 ; }
 
-	// Check for allreadall command, force Gpio mode
+	// Check for allreadall command
 	if (strcasecmp (argv [1], "allreadall") == 0) {
-		wiringPiSetupGpio () ;
-		doAllReadall      () ;
+		wiringPiSetup () ;
+		doAllReadall  () ;
 		return 0 ;
 	}
 

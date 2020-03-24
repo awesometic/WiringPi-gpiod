@@ -43,11 +43,11 @@ INCLUDE	= -I.
 DEFS	= -D_GNU_SOURCE
 CFLAGS	= $(DEBUG) $(DEFS) -Wformat=2 -Wall -Wextra -Winline -Wno-format-truncation $(INCLUDE) -pipe -fPIC
 
-LIBS    = -lm -lpthread -lrt -lcrypt
+LIBS    = -lm -lpthread -lrt -lcrypt -lgpiod
 
 ###############################################################################
 
-SRC	=	wiringPi.c						\
+SRC	=	wiringPi.c wiringGpiod.c				\
 		wiringSerial.c wiringShift.c				\
 		wiringPiSPI.c wiringPiI2C.c				\
 		piHiPri.c piThread.c					\
@@ -140,6 +140,7 @@ depend:
 
 # DO NOT DELETE
 wiringPi.o: softPwm.h softTone.h wiringPi.h ../version.h
+wiringGpiod.o: wiringPi.h wiringGpiod.h
 wiringSerial.o: wiringSerial.h
 wiringShift.o: wiringPi.h wiringShift.h
 wiringPiSPI.o: wiringPi.h wiringPiSPI.h

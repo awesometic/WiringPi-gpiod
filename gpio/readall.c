@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 
 #include <wiringPi.h>
+#include <wiringGpiod.h>
 /*----------------------------------------------------------------------------*/
 
 extern int wpMode ;
@@ -63,51 +64,6 @@ static void doReadallExternal (void)
 
 	printf ("+------+---------+--------+\n") ;
 }
-
-/*----------------------------------------------------------------------------*/
-static const char *alts [] =
-{
-	"IN", "OUT", "ALT1", "ALT2", "ALT3", "ALT4", "ALT5", "ALT6", "ALT7"
-} ;
-
-static const char *pupd [] =
-{
-	"DSBLD", "P/U", "P/D"
-} ;
-
-/*----------------------------------------------------------------------------*/
-static const int physToWpi [64] =
-{
-	-1,	// 0
-	-1, -1,	// 1, 2
-	 8, -1,
-	 9, -1,
-	 7, 15,
-	-1, 16,
-	 0,  1,
-	 2, -1,
-	 3,  4,
-	-1,  5,
-	12, -1,
-	13,  6,
-	14, 10,
-	-1, 11,	// 25, 26
-	30, 31,	// Actually I2C, but not used
-	21, -1,
-	22, 26,
-	23, -1,
-	24, 27,
-	25, 28,
-	-1, 29,
-	-1, -1,
-	-1, -1,
-	-1, -1,
-	-1, -1,
-	-1, -1,
-	17, 18,
-	19, 20,
-	-1, -1, -1, -1, -1, -1, -1, -1, -1
-} ;
 
 /*----------------------------------------------------------------------------*/
 static const int physToWpiHC4 [64] =
@@ -592,7 +548,7 @@ static const char *physNamesOdroidHC4 [64] =
 
 /*----------------------------------------------------------------------------*/
 static void readallPhys(int model, int UNU rev, int physPin, const char *physNames[], int isAll) {
-	int pin ;
+	int pin, val;
 
 	// GPIO, wPi pin number
 	if (isAll == TRUE) {
@@ -626,10 +582,13 @@ static void readallPhys(int model, int UNU rev, int physPin, const char *physNam
 			pin = physPin ;
 		else
 			pin = physToWpi [physPin];
+		val = digitalRead(pin);
 
 		printf (" | %4s", alts [getAlt (pin)]) ;
-		printf (" | %d", digitalRead (pin)) ;
-
+		if (val < 0)
+			printf(" |  ");
+		else
+			printf(" | %d", val);
 		// GPIO pin drive strength, pu/pd
 		if (isAll == TRUE) {
 			switch (model) {
@@ -669,7 +628,7 @@ static void readallPhys(int model, int UNU rev, int physPin, const char *physNam
 			pin = physPin ;
 		else
 			pin = physToWpi [physPin];
-
+		val = digitalRead(pin);
 
 		// GPIO pin drive strength, pu/pd
 		if (isAll == TRUE) {
@@ -690,7 +649,10 @@ static void readallPhys(int model, int UNU rev, int physPin, const char *physNam
 				break;
 			}
 		}
-		printf(" | %d", digitalRead (pin));
+		if (val < 0)
+			printf(" |  ");
+		else
+			printf(" | %d", val);
 		printf(" | %-4s", alts [getAlt (pin)]);
 	}
 
@@ -847,12 +809,18 @@ static void printBodyHC4(int model, int rev, const char *physNames[], int isAll)
  */
 /*----------------------------------------------------------------------------*/
 void doReadall(int argc, char *argv[]) {
-	int model, rev, mem, maker, overVolted, isAll;
+	int model, rev, mem, maker, isAll;
 	char *headerName, *physNames;
 
 	// External readall
 	if (wiringPiNodes != NULL) {
 		doReadallExternal();
+		return;
+	}
+
+	// Do not print readall table if in gpiod mode
+	if (isCurrentModeGpiod()) {
+		msg(MSG_ERR, "It couldn't provide `readall` table in gpiod mode yet. Please use with sudo.\n");
 		return;
 	}
 
@@ -868,7 +836,7 @@ void doReadall(int argc, char *argv[]) {
 		return;
 	}
 
-	piBoardId (&model, &rev, &mem, &maker, &overVolted);
+	piBoardId (&model, &rev, &mem, &maker, &wpMode);
 
 	switch (model) {
 		case MODEL_ODROID_C1:

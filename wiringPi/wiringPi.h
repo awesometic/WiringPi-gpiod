@@ -113,10 +113,17 @@
 //	The others are available for the other devices
 #define	PI_GPIO_MASK		(0xFFFFFFC0)
 
+// Size of pin related arrays
+#define	WPI_PINMAP_SIZE		64
+
 extern const char *piModelNames    [16];
 extern const char *piRevisionNames [16];
 extern const char *piMakerNames    [16];
 extern const int   piMemorySize    [ 8];
+extern const char *alts            [16];
+extern const char *pupd            [ 4];
+extern const int   physToWpi       [64];
+extern const int   wpiToPhys       [64];
 
 /*----------------------------------------------------------------------------*/
 #if !defined(ANDROID)
@@ -140,21 +147,21 @@ struct libodroid
 	int	mode;
 
 	/* wiringPi core func */
-	int	(*getModeToGpio)	(int mode, int pin);
-	int	(*setDrive)		(int pin, int value);
-	int	(*getDrive)		(int pin);
-	int	(*pinMode)		(int pin, int mode);
-	int	(*getAlt)		(int pin);
-	int	(*getPUPD)		(int pin);
-	int	(*pullUpDnControl)	(int pin, int pud);
-	int	(*digitalRead)		(int pin);
-	int	(*digitalWrite)		(int pin, int value);
-	int	(*pwmWrite)		(int pin, int value);
-	int	(*analogRead)		(int pin);
-	int	(*digitalWriteByte)	(const unsigned int value);
-	unsigned int (*digitalReadByte)	(void);
-	void	(*pwmSetRange)		(unsigned int range);
-	void	(*pwmSetClock)		(int divisor);
+	int		(*getModeToGpio)	(int mode, int pin);
+	int		(*setDrive)		(int pin, int value);
+	int		(*getDrive)		(int pin);
+	int		(*pinMode)		(int pin, int mode);
+	int		(*getAlt)		(int pin);
+	int		(*getPUPD)		(int pin);
+	int		(*pullUpDnControl)	(int pin, int pud);
+	int		(*digitalRead)		(int pin);
+	int		(*digitalWrite)		(int pin, int value);
+	int		(*pwmWrite)		(int pin, int value);
+	int		(*analogRead)		(int pin);
+	int		(*digitalWriteByte)	(const unsigned int value);
+	unsigned int	(*digitalReadByte)	(void);
+	void		(*pwmSetRange)		(unsigned int range);
+	void		(*pwmSetClock)		(int divisor);
 
 	/* ISR Function pointer */
 	void 	(*isrFunctions[256])(void);
@@ -168,6 +175,9 @@ struct libodroid
 
 	/* Running with gpiomem */
 	char	usingGpiomem;
+
+	/* Running with gpiod */
+	char	usingGpiod;
 
 	// Time for easy calculations
 	uint64_t epochMilli, epochMicro ;
@@ -282,6 +292,7 @@ extern		void usingGpiomemCheck	(const char *what);
 extern		void setUsingGpiomem	(const unsigned int value);
 extern		void setKernelVersion	(void);
 extern		char cmpKernelVersion	(int num, ...);
+extern		void setUsingGpiod	(const unsigned int value);
 
 // Core WiringPi functions
 extern		void wiringPiVersion	(int *major, char **minor);
@@ -305,7 +316,7 @@ extern		int  analogRead		(int pin);
 
 // Hardware specific stuffs
 extern		int  piGpioLayout	(void);
-extern		void piBoardId		(int *model, int *rev, int *mem, int *maker, int *warranty);
+extern		void piBoardId		(int *model, int *rev, int *mem, int *maker, int *mode);
 extern		int  wpiPinToGpio	(int wpiPin);
 extern		int  physPinToGpio	(int physPin);
 

@@ -35,6 +35,7 @@
 
 /*----------------------------------------------------------------------------*/
 #include "wiringPi.h"
+#include "wiringGpiod.h"
 #include "../version.h"
 
 /*----------------------------------------------------------------------------*/
@@ -113,6 +114,75 @@ const int piMemorySize [8] =
 	8192,		//	 5
 	0,		//	 6
 	0,		//	 7
+} ;
+
+/*----------------------------------------------------------------------------*/
+const char *alts [] =
+{
+	"IN", "OUT", "ALT1", "ALT2", "ALT3", "ALT4", "ALT5", "ALT6", "ALT7"
+} ;
+
+const char *pupd [] =
+{
+	"DSBLD", "P/U", "P/D"
+} ;
+
+/*----------------------------------------------------------------------------*/
+const int physToWpi [WPI_PINMAP_SIZE] =
+{
+	-1,		//  0
+	-1, -1,		//  1 |  2
+	 8, -1,		//  3 |  4
+	 9, -1,		//  5 |  6
+	 7, 15,		//  7 |  8
+	-1, 16,		//  9 | 10
+	 0,  1,		// 11 | 12
+	 2, -1,		// 13 | 14
+	 3,  4,		// 15 | 16
+	-1,  5,		// 17 | 18
+	12, -1,		// 19 | 20
+	13,  6,		// 21 | 22
+	14, 10,		// 23 | 24
+	-1, 11,		// 25 | 26
+	30, 31,		// 27 | 28 Actually I2C, but not used
+	21, -1,		// 29 | 30
+	22, 26,		// 31 | 32
+	23, -1,		// 33 | 34
+	24, 27,		// 35 | 36
+	25, 28,		// 37 | 38
+	-1, 29,		// 39 | 40
+	-1, -1,		// 41 | 42
+	-1, -1,		// 43 | 44
+	-1, -1,		// 45 | 46
+	-1, -1,		// 47 | 48
+	-1, -1,		// 49 | 50
+	17, 18,		// 51 | 52
+	19, 20,		// 53 | 54
+	-1, -1, -1, -1, -1, -1, -1, -1, -1
+} ;
+
+const int wpiToPhys [WPI_PINMAP_SIZE] =
+{
+	11, 12,		//  0 |  1
+	13, 15,		//  2 |  3
+	16, 18,		//  4 |  5
+	22,  7,		//  6 |  7
+	 3,  5,		//  8 |  9
+	24, 26,		// 10 | 11
+	19, 21,		// 12 | 13
+	23,  8,		// 14 | 15
+	10, -1,		// 16 | 17
+	-1, -1,		// 18 | 19
+	-1, 29,		// 20 | 21
+	31, 33,		// 22 | 23
+	35, 37,		// 24 | 25
+	32, 36,		// 26 | 27
+	38, 40,		// 28 | 29
+	27, 28,		// 30 | 31
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1
 } ;
 
 /*----------------------------------------------------------------------------*/
@@ -363,6 +433,17 @@ char cmpKernelVersion(int num, ...) {
 }
 
 /*----------------------------------------------------------------------------*/
+/*
+ * setUsingGpiod:
+ *	Set to TRUE if the system supports gpiod.
+ */
+/*----------------------------------------------------------------------------*/
+void setUsingGpiod(const unsigned int value)
+{
+	libwiring.usingGpiod = value;
+}
+
+/*----------------------------------------------------------------------------*/
 int getModelFromCpuinfo(char *line, FILE *cpuFd) {
 	char *model;
 
@@ -539,7 +620,7 @@ int piGpioLayout (void) {
  *  05xx - Model ODROID C4, 4096M, Hardkernel
  */
 /*----------------------------------------------------------------------------*/
-void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
+void piBoardId (int *model, int *rev, int *mem, int *maker, int *mode)
 {
 	// Call this first to make sure all's OK. Don't care about the result.
 	(void)piGpioLayout () ;
@@ -548,7 +629,7 @@ void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
 	*maker	= libwiring.maker;
 	*rev	= libwiring.rev;
 	*mem	= libwiring.mem;
-	*warranty = 1;
+	*mode	= libwiring.mode;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -715,12 +796,17 @@ void pullUpDnControl (int pin, int pud)
 /*----------------------------------------------------------------------------*/
 int digitalRead (int pin)
 {
+	int ret = -1;
 	setupCheck(__func__);
 
-	if (libwiring.digitalRead)
-		return	libwiring.digitalRead(pin);
+	if (libwiring.digitalRead) {
+		if ((ret = libwiring.digitalRead(pin)) < 0) {
+			if (wiringPiDebug)
+				msg(MSG_WARN, "%s: Not available for pin %d. \n", __func__, pin);
+		}
+	}
 
-	return	-1;
+	return ret;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1223,8 +1309,8 @@ int wiringPiSetup (void)
 	}
 
 	initialiseEpoch ();
-
 	libwiring.mode = MODE_PINS;
+
 	return 0;
 }
 
@@ -1290,7 +1376,6 @@ int wiringPiSetupSys (void)
 
 	// Open and scan the directory, looking for exported GPIOs, and pre-open
 	//	the 'value' interface to speed things up for later
-
 	for (pin = 0 ; pin < 256 ; ++pin)
 	{
 		switch (libwiring.model) {

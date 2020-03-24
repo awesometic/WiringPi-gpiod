@@ -22,6 +22,7 @@
 
 /*----------------------------------------------------------------------------*/
 #include "wiringPi.h"
+#include "wiringGpiod.h"
 #include "odroidn2.h"
 
 /*----------------------------------------------------------------------------*/
@@ -210,7 +211,7 @@ static void		_pwmSetClock		(int divisor);
 /*----------------------------------------------------------------------------*/
 // board init function
 /*----------------------------------------------------------------------------*/
-static 	void init_gpio_mmap	(void);
+static 	void init_gpio_mmap	(struct libodroid *libwiring);
 static 	void init_adc_fds	(void);
 
 	void init_odroidn2 	(struct libodroid *libwiring);
@@ -426,7 +427,7 @@ static int _getDrive (int pin)
 }
 
 /*----------------------------------------------------------------------------*/
-static int _pinMode (int pin, int mode)
+UNU static int _pinMode (int pin, int mode)
 {
 	int fsel, mux, target, shift, origPin = pin;
 
@@ -579,7 +580,7 @@ static int _pullUpDnControl (int pin, int pud)
 }
 
 /*----------------------------------------------------------------------------*/
-static int _digitalRead (int pin)
+UNU static int _digitalRead (int pin)
 {
 	char c ;
 
@@ -606,7 +607,7 @@ static int _digitalRead (int pin)
 }
 
 /*----------------------------------------------------------------------------*/
-static int _digitalWrite (int pin, int value)
+UNU static int _digitalWrite (int pin, int value)
 {
 	if (lib->mode == MODE_GPIO_SYS) {
 		if (lib->sysFds[pin] != -1) {
@@ -704,7 +705,7 @@ static int _analogRead (int pin)
 }
 
 /*----------------------------------------------------------------------------*/
-static int _digitalWriteByte (const unsigned int value)
+UNU static int _digitalWriteByte (const unsigned int value)
 {
 	union	reg_bitfield	gpiox;
 	union	reg_bitfield	gpioa;
@@ -779,13 +780,48 @@ static void _pwmSetClock (int divisor)
 }
 
 /*----------------------------------------------------------------------------*/
-static unsigned int _digitalReadByte (void)
+UNU static unsigned int _digitalReadByte (void)
 {
-	return	-1;
+	union	reg_bitfield	gpiox;
+	union	reg_bitfield	gpioa;
+	unsigned int		value = 0;
+
+	if (lib->mode == MODE_GPIO_SYS)
+		return -1;
+
+	gpiox.wvalue = *(gpio + N2_GPIOX_INP_REG_OFFSET);
+	gpioa.wvalue = *(gpio + N2_GPIOA_INP_REG_OFFSET);
+
+	/* Wiring PI GPIO0 = N2 GPIOX.3 */
+	if (gpiox.bits.bit3)
+		value |= 0x01;
+	/* Wiring PI GPIO1 = N2 GPIOX.16 */
+	if (gpiox.bits.bit16)
+		value |= 0x02;
+	/* Wiring PI GPIO2 = N2 GPIOX.4 */
+	if (gpiox.bits.bit4)
+		value |= 0x04;
+	/* Wiring PI GPIO3 = N2 GPIOX.7 */
+	if (gpiox.bits.bit7)
+		value |= 0x08;
+	/* Wiring PI GPIO4 = N2 GPIOX.0 */
+	if (gpiox.bits.bit0)
+		value |= 0x10;
+	/* Wiring PI GPIO5 = N2 GPIOX.1 */
+	if (gpiox.bits.bit1)
+		value |= 0x20;
+	/* Wiring PI GPIO6 = N2 GPIOX.2 */
+	if (gpiox.bits.bit2)
+		value |= 0x40;
+	/* Wiring PI GPIO7 = N2 GPIOA.13 */
+	if (gpioa.bits.bit13)
+		value |= 0x80;
+
+	return	value;
 }
 
 /*----------------------------------------------------------------------------*/
-static void init_gpio_mmap (void)
+static void init_gpio_mmap (struct libodroid *libwiring)
 {
 	int fd = -1;
 	void *mapped;
@@ -797,15 +833,14 @@ static void init_gpio_mmap (void)
 				"wiringPiSetup: Unable to open /dev/mem: %s\n",
 				strerror (errno));
 	} else {
-		if (access("/dev/gpiomem",0) == 0) {
-			if ((fd = open ("/dev/gpiomem", O_RDWR | O_SYNC | O_CLOEXEC) ) < 0)
-				msg(MSG_ERR,
-					"wiringPiSetup: Unable to open /dev/gpiomem: %s\n",
-					strerror (errno));
+		if (access("/dev/gpiomem",0) == 0 && (fd = open ("/dev/gpiomem", O_RDWR | O_SYNC | O_CLOEXEC) ) < 0) {
 			setUsingGpiomem(TRUE);
+		} else if (isGpiodInstalled()) {
+			initGpiod(libwiring);
+			return;
 		} else
-			msg(MSG_ERR,
-				"wiringPiSetup: /dev/gpiomem doesn't exist. Please try again with sudo.\n");
+			msg (MSG_ERR,
+				"wiringPiSetup: Neither /dev/gpiomem nor libgpiod-dev doesn't exist. Please try with sudo .\n");
 	}
 
 	if (fd < 0) {
@@ -851,10 +886,6 @@ static void init_adc_fds (void)
 /*----------------------------------------------------------------------------*/
 void init_odroidn2 (struct libodroid *libwiring)
 {
-	init_gpio_mmap();
-
-	init_adc_fds();
-
 	pinToGpio = pinToGpio_rev1;
 	phyToGpio = phyToGpio_rev1;
 
@@ -877,6 +908,9 @@ void init_odroidn2 (struct libodroid *libwiring)
 
 	/* specify pin base number */
 	libwiring->pinBase		= N2_GPIO_PIN_BASE;
+
+	init_gpio_mmap(libwiring);
+	init_adc_fds();
 
 	/* global variable setup */
 	lib = libwiring;

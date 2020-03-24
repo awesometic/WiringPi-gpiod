@@ -134,9 +134,9 @@ int wiringPiSPISetupInterface	(const char *device, int channel, int speed, int m
 int wiringPiSPISetupMode (int channel, int speed, int mode)
 {
 	char device[25];
-	int model, temp;
+	int model, rev, mem, maker, wpMode;
 
-	piBoardId (&model, &temp, &temp, &temp, &temp) ;
+	piBoardId (&model, &rev, &mem, &maker, &wpMode);
 
 	switch(model)	{
 	case MODEL_ODROID_C2:

@@ -236,10 +236,10 @@ int wiringPiI2CSetupInterface (const char *device, int devId)
 
 int wiringPiI2CSetup (const int devId)
 {
-	int model, rev, mem, maker, overVolted ;
+	int model, rev, mem, maker, mode;
 	const char *device = NULL;
 
-	piBoardId (&model, &rev, &mem, &maker, &overVolted) ;
+	piBoardId (&model, &rev, &mem, &maker, &mode) ;
 
 	switch(model)	{
 	case MODEL_ODROID_C1:

@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Deokgyu Yang <secugyu@gmail.com>
 Standards-Version: 3.8.0
 Homepage: https://wiki.odroid.com
-Build-Depends: debhelper (>= 10)
+Build-Depends: debhelper (>= 10), libgpiod-dev
 
 Package: libwiringpi2
 Section: libs

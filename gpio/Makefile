@@ -37,7 +37,7 @@ INCLUDE	= -I$(DESTDIR)$(PREFIX)/include
 CFLAGS	= $(DEBUG) -Wall -Wextra $(INCLUDE) -Winline -pipe
 
 LDFLAGS	= -L$(DESTDIR)$(PREFIX)/lib
-LIBS    = -lwiringPi -lpthread -lrt -lm -lcrypt
+LIBS    = -lwiringPi -lpthread -lrt -lm -lcrypt -lgpiod
 
 # May not need to  alter anything below this line
 ###############################################################################
