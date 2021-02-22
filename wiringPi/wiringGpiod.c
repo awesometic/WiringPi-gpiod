@@ -99,7 +99,6 @@ enum GpiodConfigPresets {
 static struct libodroid *lib = NULL;
 
 char isGpiodInstalled();
-char isCurrentModeGpiod();
 void initGpiod(struct libodroid *libwiring);
 
 int _makeSureToUsephyPin(int pin);
@@ -133,10 +132,6 @@ void _closeIfRequested(struct gpiod_line *line) {
 char isGpiodInstalled() {
 	return system("/sbin/ldconfig -p | grep libgpiod > /dev/null")
 		? FALSE : TRUE;
-}
-
-char isCurrentModeGpiod() {
-	return lib->usingGpiod;
 }
 
 void initGpiod(struct libodroid *libwiring) {

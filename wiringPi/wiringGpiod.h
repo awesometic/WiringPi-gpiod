@@ -31,7 +31,6 @@ extern "C" {
 #define WPI_GPIOD_CONSUMER_NAME	"WiringPi"
 
 extern char isGpiodInstalled();
-extern char isCurrentModeGpiod();
 extern void initGpiod(struct libodroid *libwiring);
 
 #ifdef __cplusplus

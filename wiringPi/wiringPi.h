@@ -293,6 +293,7 @@ extern		void setUsingGpiomem	(const unsigned int value);
 extern		void setKernelVersion	(void);
 extern		char cmpKernelVersion	(int num, ...);
 extern		void setUsingGpiod	(const unsigned int value);
+extern		int  isCurrentModeGpiod (void);
 
 // Core WiringPi functions
 extern		void wiringPiVersion	(int *major, char **minor);

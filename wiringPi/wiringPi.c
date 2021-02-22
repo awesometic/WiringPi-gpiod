@@ -444,6 +444,17 @@ void setUsingGpiod(const unsigned int value)
 }
 
 /*----------------------------------------------------------------------------*/
+/*
+ * setUsingGpiod:
+ *	Return TRUE if current mode is gpiod.
+ */
+/*----------------------------------------------------------------------------*/
+int isCurrentModeGpiod()
+{
+	return libwiring.usingGpiod;
+}
+
+/*----------------------------------------------------------------------------*/
 int getModelFromCpuinfo(char *line, FILE *cpuFd) {
 	char *model;
 
