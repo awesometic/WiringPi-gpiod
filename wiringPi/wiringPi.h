@@ -126,6 +126,11 @@ extern const char *pupd            [ 4];
 extern const int   physToWpi       [64];
 extern const int   wpiToPhys       [64];
 
+// Debugging & Return codes
+extern int wiringPiDebug;
+extern int wiringPiReturnCodes;
+extern int wiringPiSetuped;
+
 /*----------------------------------------------------------------------------*/
 #if !defined(ANDROID)
 #define	PAGE_SIZE		(4*1024)
