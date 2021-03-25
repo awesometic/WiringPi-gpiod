@@ -84,14 +84,17 @@ static int _gpiodRequests[WPI_PINMAP_SIZE] = { -1, };
 //
 // I prepared a enum to use that instead of preprocessors
 /*----------------------------------------------------------------------------*/
-static struct gpiod_line_request_config *_gpiodReqConfigs[16];
-
 enum GpiodConfigPresets {
 	CONF_DIR_ASIS = 0,
 	CONF_DIR_IN,
 	CONF_DIR_OUT,
+	CONF_PULL_DISABLED,
+	CONF_PULL_DOWN,
+	CONF_PULL_UP,
 	CONF_NUM_OF_TYPES
 };
+
+static struct gpiod_line_request_config *_gpiodReqConfigs[CONF_NUM_OF_TYPES];
 
 /*----------------------------------------------------------------------------*/
 // Global struct variable and prototypes of core functions
@@ -104,6 +107,8 @@ void initGpiod(struct libodroid *libwiring);
 int _makeSureToUsephyPin(int pin);
 void _closeIfRequested(struct gpiod_line *line);
 
+int _gpiod_getPUPD (int pin);
+int _gpiod_pullUpDnControl (int pin, int pud);
 int _gpiod_digitalRead(int pin);
 int _gpiod_digitalWrite(int pin, int value);
 int _gpiod_pinMode(int pin, int mode);
@@ -142,6 +147,9 @@ void initGpiod(struct libodroid *libwiring) {
 	if (!isGpiodInstalled())
 		msg(MSG_ERR, "It seems this system hasn't libgpiod library.\n\tInstall that first and try again.\n");
 
+	if (wiringPiDebug)
+		printf("%s: %4d: About to initialize gpiod mode\n", __func__, __LINE__);
+
 	for (i = 0; i < CONF_NUM_OF_TYPES; i++) {
 		_gpiodReqConfigs[i] = (struct gpiod_line_request_config *) malloc(sizeof(struct gpiod_line_request_config));
 		_gpiodReqConfigs[i]->consumer = WPI_GPIOD_CONSUMER_NAME;
@@ -156,6 +164,18 @@ void initGpiod(struct libodroid *libwiring) {
 			break;
 		case CONF_DIR_OUT:
 			_gpiodReqConfigs[i]->request_type = GPIOD_LINE_REQUEST_DIRECTION_OUTPUT;
+			break;
+		case CONF_PULL_DISABLED:
+			_gpiodReqConfigs[i]->request_type = GPIOD_LINE_REQUEST_DIRECTION_INPUT;
+			_gpiodReqConfigs[i]->flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_DISABLE;
+			break;
+		case CONF_PULL_DOWN:
+			_gpiodReqConfigs[i]->request_type = GPIOD_LINE_REQUEST_DIRECTION_INPUT;
+			_gpiodReqConfigs[i]->flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN;
+			break;
+		case CONF_PULL_UP:
+			_gpiodReqConfigs[i]->request_type = GPIOD_LINE_REQUEST_DIRECTION_INPUT;
+			_gpiodReqConfigs[i]->flags |= GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP;
 			break;
 		default:
 			break;
@@ -181,6 +201,8 @@ void initGpiod(struct libodroid *libwiring) {
 	}
 
 	libwiring->usingGpiod = TRUE;
+	libwiring->getPUPD = _gpiod_getPUPD;
+	libwiring->pullUpDnControl = _gpiod_pullUpDnControl;
 	libwiring->digitalRead = _gpiod_digitalRead;
 	libwiring->digitalWrite = _gpiod_digitalWrite;
 	libwiring->pinMode = _gpiod_pinMode;
@@ -188,6 +210,48 @@ void initGpiod(struct libodroid *libwiring) {
 	libwiring->digitalWriteByte = _gpiod_digitalWriteByte;
 
 	lib = libwiring;
+
+	if (wiringPiDebug)
+		printf("%s: %4d: gpiod mode initilized \n", __func__, __LINE__);
+}
+
+UNU int _gpiod_getPUPD(int pin) {
+	int phyPin;
+	struct gpiod_line *line;
+
+	phyPin = _makeSureToUsePhyPin(pin);
+	if ((line = _gpiodLines[phyPin]) == NULL)
+		return -1;
+
+	switch (gpiod_line_bias(line)) {
+	case GPIOD_LINE_REQUEST_FLAG_BIAS_DISABLE:
+		return PUD_OFF;
+	case GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN:
+		return PUD_DOWN;
+	case GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP:
+		return PUD_UP;
+	default:
+		msg(MSG_ERR, "%s: Error on getting pull status of the pin physical #%d.\n", __func__, phyPin);
+		return -1;
+	}
+}
+
+UNU int _gpiod_pullUpDnControl(int pin, int pud) {
+	int pudModeForPinMode = 0;
+
+	switch (pud) {
+	case PUD_OFF:
+		pudModeForPinMode = INPUT_PULLOFF;
+		break;
+	case PUD_DOWN:
+		pudModeForPinMode = INPUT_PULLDOWN;
+		break;
+	case PUD_UP:
+		pudModeForPinMode = INPUT_PULLUP;
+		break;
+	}
+
+	return _gpiod_pinMode(pin, pudModeForPinMode);
 }
 
 UNU int _gpiod_digitalRead(int pin) {
@@ -226,6 +290,7 @@ UNU int _gpiod_digitalWrite(int pin, int value) {
 UNU int _gpiod_pinMode(int pin, int mode) {
 	int req, phyPin;
 	struct gpiod_line *line;
+	int curValue = _gpiod_digitalRead(pin);
 
 	phyPin = _makeSureToUsePhyPin(pin);
 	if ((line = _gpiodLines[phyPin]) == NULL)
@@ -238,20 +303,34 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 
 	switch (mode) {
 	case INPUT:
-		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_IN], 0) < 0) {
+		if ((req = gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_IN], curValue)) < 0) {
 			msg(MSG_ERR, "%s: Error on setting direction of the pin physical #%d.\n", __func__, phyPin);
 			return -1;
 		}
 		break;
 	case OUTPUT:
-		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_OUT], 1) < 0) {
+		if ((req = gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_OUT], curValue)) < 0) {
 			msg(MSG_ERR, "%s: Error on setting direction of the pin physical #%d.\n", __func__, phyPin);
 			return -1;
 		}
 		break;
 	case INPUT_PULLUP:
+		if ((req = gpiod_line_request(line, _gpiodReqConfigs[CONF_PULL_UP], curValue)) < 0) {
+			msg(MSG_ERR, "%s: Error on setting pull status of the pin physical #%d.\n", __func__, phyPin);
+			return -1;
+		}
+		break;
 	case INPUT_PULLDOWN:
-		msg(MSG_WARN, "%s: Requested mode is not implemented yet on libgpiod.\n", __func__);
+		if ((req = gpiod_line_request(line, _gpiodReqConfigs[CONF_PULL_DOWN], curValue)) < 0) {
+			msg(MSG_ERR, "%s: Error on setting pull status of the pin physical #%d.\n", __func__, phyPin);
+			return -1;
+		}
+		break;
+	case INPUT_PULLOFF:
+		if ((req = gpiod_line_request(line, _gpiodReqConfigs[CONF_PULL_DISABLED], curValue)) < 0) {
+			msg(MSG_ERR, "%s: Error on setting pull status of the pin physical #%d.\n", __func__, phyPin);
+			return -1;
+		}
 		break;
 	case SOFT_PWM_OUTPUT:
 		softPwmCreate(phyPin, 0, 100);
@@ -264,13 +343,6 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 	}
 
 	_closeIfRequested(line);
-
-	if ((req = gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_ASIS], -1)) < 0) {
-		msg(MSG_ERR, "%s: Error on setting pin mode for physical pin #%d.\n\tThis pin will be disabled.\n", __func__, phyPin);
-
-		_gpiodLines[phyPin] = NULL;
-		return -1;
-	}
 
 	_gpiodRequests[phyPin] = req;
 	return 0;
