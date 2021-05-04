@@ -1,0 +1,14 @@
+# /dev/i2c*
+SUBSYSTEM=="i2c-dev", GROUP="smbus", MODE="0660"
+
+# /dev/spi*
+SUBSYSTEM=="spidev", GROUP="smbus", MODE="0660"
+
+# /dev/gpiochip*
+SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="gpio", MODE="0660"
+
+# /sys/class/pwm/pwmchip/pwm*
+KERNEL=="pwm*", ACTION=="add|change", PROGRAM="/bin/sh -c '\
+    chown root:pwm /sys%p/pwm*/period /sys%p/pwm*/duty_cycle /sys%p/pwm*/enable;\
+    chmod 660 /sys%p/pwm*/period /sys%p/pwm*/duty_cycle /sys%p/pwm*/enable;\
+    chown root:pwm /sys%p/export /sys%p/unexport; chmod 660 /sys%p/export /sys%p/unexport'"
