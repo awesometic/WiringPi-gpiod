@@ -4,6 +4,7 @@
 #	Simple wiringPi build and install script
 #
 #	Copyright (c) 2012-2015 Gordon Henderson
+# Copyright (c) 2020-2021 Deogyu Yang <secugyu@gmail.com>
 #################################################################################
 # This file is part of wiringPi:
 #	A "wiring" library for the Raspberry Pi
@@ -37,6 +38,7 @@ hardware=$(fgrep -a Hardware /proc/cpuinfo | head -1 | awk '{ printf("%s %s %s\n
 [ "$hardware",, != *"odroid"* ] \
   && [ -f "/sys/firmware/devicetree/base/model" ] \
   && hardware=$(cat /sys/firmware/devicetree/base/model)
+hardware=$(echo "$hardware" | tr '[:upper:]' '[:lower:]')
 
 check_make_ok() {
   if [ $? != 0 ]; then
@@ -47,6 +49,25 @@ check_make_ok() {
     echo "  projects@drogon.net"
     echo ""
     exit 1
+  fi
+}
+
+configure_periphs() {
+  if [ -z "$1" ]; then
+    case "$hardware" in
+    *"odroid"*)
+      echo "Configure peripheral device nodes"
+      $sudo cp -f udev/rules.d/10-odroid-periphs.rules /etc/udev/rules.d/
+      ;;
+    *)
+      echo "This system seems not ODROID"
+      ;;
+    esac
+  elif [ "$1" = "uninstall" ]; then
+    echo "Deconfigure peripheral device nodes"
+    $sudo rm -f /etc/udev/rules.d/10-odroid-periphs.rules
+  else
+    echo "Invalid arguments"
   fi
 }
 
@@ -81,7 +102,7 @@ configure_gpiomem() {
     $sudo rm -f /etc/udev/rules.d/99-odroid-wiringpi-*
   else
     echo "Not found $GPIOMEM"
-    echo "You will not be able to use WiringPi without root permission"
+    echo "You will not be able to use WiringPi without root permission unless use gpiod"
   fi
 }
 
@@ -143,6 +164,7 @@ install() {
 
   echo
   cd ..
+  configure_periphs
   configure_gpiomem
 
   echo
@@ -165,6 +187,7 @@ uninstall() {
   cd ../gpio
   echo -n "gpio:     " ; $sudo $make uninstall
   cd ..
+  configure_periphs uninstall
   configure_gpiomem uninstall
   echo
 }
