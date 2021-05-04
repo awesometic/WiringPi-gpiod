@@ -342,8 +342,6 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 		break;
 	}
 
-	_closeIfRequested(line);
-
 	_gpiodRequests[phyPin] = req;
 	return 0;
 }
