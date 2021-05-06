@@ -52,6 +52,8 @@ check_make_ok() {
 }
 
 configure_periphs() {
+  [ $(env | grep DEB_BUILD | wc -l) -ne 0 ] && return
+
   if [ -z "$1" ]; then
     echo "Configure peripheral device nodes"
     $sudo cp -f udev/rules.d/10-odroid-periphs.rules /etc/udev/rules.d/
