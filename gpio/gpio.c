@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 
 #include <wiringPi.h>
+#include <wiringGpiod.h>
 
 #include "../version.h"
 
@@ -882,6 +883,7 @@ static void doVersion (char *argv [])
 int main (int argc, char *argv [])
 {
 	int i ;
+	struct stat statBuf;
 
 	if (getenv ("WIRINGPI_DEBUG") != NULL) {
 		printf ("gpio: wiringPi debug mode enabled\n") ;
@@ -933,8 +935,10 @@ int main (int argc, char *argv [])
 	}
 
 	if (geteuid () != 0) {
-		fprintf (stderr, "%s: Must be root to run. Program should be suid root. This is an error.\n", argv [0]) ;
-		return 1 ;
+		if (stat("/dev/gpiomem", &statBuf) != 0 && isGpiodInstalled() == FALSE) {
+			fprintf (stderr, "%s: Must be root to run. Program should be suid root. This is an error.\n", argv [0]) ;
+			return 1 ;
+		}
 	}
 
 	// Initial test for /sys/class/gpio operations:
