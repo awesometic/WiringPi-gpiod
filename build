@@ -53,15 +53,8 @@ check_make_ok() {
 
 configure_periphs() {
   if [ -z "$1" ]; then
-    case "$hardware" in
-    *"odroid"*)
-      echo "Configure peripheral device nodes"
-      $sudo cp -f udev/rules.d/10-odroid-periphs.rules /etc/udev/rules.d/
-      ;;
-    *)
-      echo "This system seems not ODROID"
-      ;;
-    esac
+    echo "Configure peripheral device nodes"
+    $sudo cp -f udev/rules.d/10-odroid-periphs.rules /etc/udev/rules.d/
   elif [ "$1" = "uninstall" ]; then
     echo "Deconfigure peripheral device nodes"
     $sudo rm -f /etc/udev/rules.d/10-odroid-periphs.rules
