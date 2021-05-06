@@ -1,3 +1,21 @@
+odroid-wiringpi (9:3.10) stable; urgency=medium
+
+  * WiringPi: Add support for gpiod
+    * Since the mainline kernel, which are from 5.x version generally, doesn't
+      support /dev/gpiomem that is created for userland use. As the
+      /dev/gpiomem character device is not the recommended way, we should use
+      libgpiod to use the exposed gpio pins on the board.
+    * For now only the following features supported on WiringPi.
+      * Digital read/write and byte read, byte write.
+      * Change direction of the GPIO pin.
+      * Pull up/down or off.
+    * If the /dev/gpiomem device exists, gpiod mode won't be enabled.
+  * WiringPi: udev: Add a rules file for handling peripherals in user space
+  * WiringPi: deb: Support for the new udev rules
+  * WiringPi: build: Better dealing with lowercase
+
+ -- Deokgyu Yang <secugyu@gmail.com>  Wed, 06 May 2021 11:37:38 +0900
+
 odroid-wiringpi (9:3.9) stable; urgency=medium
 
   * WiringPi: Android: Add odroidhc4.c to compile on the android platform

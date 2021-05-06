@@ -2,9 +2,8 @@
  * wiringGpiod.h
  *      Support library to use modern libgpiod for Odroid.
  *      This library works only as a part of WiringPi Odroid-ports.
- *      Copyright (c) 2020 Deokgyu Yang <secugyu@gmail.com>
 ********************************************************************************
-Copyright (C) 2020 Deokgyu Yang <secugyu@gmail.com>
+Copyright (C) 2020-2021 Deokgyu Yang <secugyu@gmail.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
