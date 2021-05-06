@@ -4,7 +4,7 @@
 #	Simple wiringPi build and install script
 #
 #	Copyright (c) 2012-2015 Gordon Henderson
-# Copyright (c) 2020-2021 Deogyu Yang <secugyu@gmail.com>
+#	Copyright (c) 2020-2021 Deogyu Yang <secugyu@gmail.com>
 #################################################################################
 # This file is part of wiringPi:
 #	A "wiring" library for the Raspberry Pi
@@ -34,11 +34,10 @@
 
 sudo=${WIRINGPI_SUDO-sudo}
 make="make -j $(( $(nproc) + 1 ))"
-hardware=$(fgrep -a Hardware /proc/cpuinfo | head -1 | awk '{ printf("%s %s %s\n", $3, $4, $5) }' | xargs)
-[ "$hardware",, != *"odroid"* ] \
+hardware=$(fgrep -a Hardware /proc/cpuinfo | head -1 | awk '{ printf("%s %s %s\n", $3, $4, $5) }' | xargs | tr '[:upper:]' '[:lower:]')
+[ "$hardware" != *"odroid"* ] \
   && [ -f "/sys/firmware/devicetree/base/model" ] \
-  && hardware=$(cat /sys/firmware/devicetree/base/model)
-hardware=$(echo "$hardware" | tr '[:upper:]' '[:lower:]')
+  && hardware=$(cat /sys/firmware/devicetree/base/model | tr '[:upper:]' '[:lower:]')
 
 check_make_ok() {
   if [ $? != 0 ]; then
@@ -78,7 +77,7 @@ configure_gpiomem() {
 
   if [ -z $1 ] && [ "$(stat -c "%a %G" "$GPIOMEM")" != "660"*"odroid" ]; then
     echo "Configure /dev/gpiomem"
-    case "$(echo $hardware | tr [:upper:] [:lower:])" in
+    case "$hardware" in
       *xu4)
         $sudo cp -f udev/rules.d/99-odroid-wiringpi-exynos.rules /etc/udev/rules.d/
         ;;
