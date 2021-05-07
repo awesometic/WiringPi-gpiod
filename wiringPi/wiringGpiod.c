@@ -108,6 +108,9 @@ int _gpiod_pinMode(int pin, int mode);
 unsigned int _gpiod_digitalReadByte();
 int _gpiod_digitalWriteByte(const unsigned int value);
 
+int _gpiod_unsupportedFunction();
+void _gpiod_unsupportedFunctionVoid();
+
 /*----------------------------------------------------------------------------*/
 // Implements
 /*----------------------------------------------------------------------------*/
@@ -191,6 +194,13 @@ void initGpiod(struct libodroid *libwiring) {
 	libwiring->pinMode = _gpiod_pinMode;
 	libwiring->digitalReadByte = _gpiod_digitalReadByte;
 	libwiring->digitalWriteByte = _gpiod_digitalWriteByte;
+
+	libwiring->setDrive = _gpiod_unsupportedFunction;
+	libwiring->getDrive = _gpiod_unsupportedFunction;
+	libwiring->getAlt = _gpiod_unsupportedFunction;
+	libwiring->pwmWrite = _gpiod_unsupportedFunction;
+	libwiring->pwmSetRange = _gpiod_unsupportedFunctionVoid;
+	libwiring->pwmSetClock = _gpiod_unsupportedFunctionVoid;
 
 	lib = libwiring;
 
@@ -384,4 +394,13 @@ UNU int _gpiod_digitalWriteByte(const unsigned int value) {
 	}
 
 	return 0;
+}
+
+UNU int _gpiod_unsupportedFunction() {
+	msg(MSG_ERR, "%s: Sorry, the function you requested is unsupported in gpiod mode yet.\n", __func__);
+	return -1;
+}
+
+UNU void _gpiod_unsupportedFunctionVoid() {
+	msg(MSG_ERR, "%s: Sorry, the function you requested is unsupported in gpiod mode yet.\n", __func__);
 }
