@@ -336,19 +336,11 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 }
 
 UNU unsigned int _gpiod_digitalReadByte() {
-	int ret, phyPin;
+	int ret;
 	unsigned char i, hexVal, value = 0;
-	struct gpiod_line *line;
 
 	for (i = 0; i < 8; i++) {
-		phyPin = wpiToPhys[i];
-		if ((line = _gpiodLines[phyPin]) == NULL)
-			return -1;
-
-		if ((ret = gpiod_line_get_value(line)) < 0) {
-			msg(MSG_WARN, "%s: Error on getting value of the pin physical #%d.\n", __func__, phyPin);
-			return -1;
-		}
+		ret = _gpiod_digitalRead(i);
 
 		switch (i) {
 		case 0: hexVal = 0x01; break;
@@ -368,15 +360,9 @@ UNU unsigned int _gpiod_digitalReadByte() {
 }
 
 UNU int _gpiod_digitalWriteByte(const unsigned int value) {
-	int ret, phyPin;
 	unsigned char i, hexVal;
-	struct gpiod_line *line;
 
 	for (i = 0; i < 8; i++) {
-		phyPin = wpiToPhys[i];
-		if ((line = _gpiodLines[phyPin]) == NULL)
-			return -1;
-
 		switch (i) {
 		case 0: hexVal = 0x01; break;
 		case 1: hexVal = 0x02; break;
@@ -388,10 +374,7 @@ UNU int _gpiod_digitalWriteByte(const unsigned int value) {
 		case 7: hexVal = 0x80; break;
 		}
 
-		if ((ret = gpiod_line_set_value(line, value & hexVal)) < 0) {
-			msg(MSG_WARN, "%s: Error on setting value of the pin physical #%d.\n", __func__, phyPin);
-			return -1;
-		}
+		_gpiod_digitalWrite(i, value & hexVal);
 	}
 
 	return 0;
