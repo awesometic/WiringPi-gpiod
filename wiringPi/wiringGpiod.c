@@ -266,7 +266,6 @@ UNU int _gpiod_digitalWrite(int pin, int value) {
 	struct gpiod_line *line;
 
 	phyPin = _makeSureToUsePhyPin(pin);
-
 	if ((line = _gpiodLines[phyPin]) == NULL)
 		return -1;
 	chip = gpiod_line_get_chip(line);
