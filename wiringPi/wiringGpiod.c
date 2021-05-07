@@ -328,11 +328,9 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 		}
 		break;
 	case SOFT_PWM_OUTPUT:
-		softPwmCreate(phyPin, 0, 100);
-		break;
+		return softPwmCreate(phyPin, 0, 100);
 	case SOFT_TONE_OUTPUT:
-		softToneCreate(phyPin);
-		break;
+		return softToneCreate(phyPin);
 	default:
 		break;
 	}
