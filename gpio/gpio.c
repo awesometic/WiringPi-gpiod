@@ -197,7 +197,7 @@ static void doUnLoad (int UNU argc, char *argv [])
  */
 static void doI2Cdetect (UNU int argc, char *argv [])
 {
-	int model, rev, mem, maker, mode, port;
+	int model, rev, mem, maker, mode, port = -1;
 	char *c, *command ;
 
 	piBoardId(&model, &rev, &mem, &maker, &mode);
@@ -245,6 +245,11 @@ static void doI2Cdetect (UNU int argc, char *argv [])
 		break;
 	default:
 		break;
+	}
+
+	if (port == -1) {
+		fprintf(stderr, "%s: port number is not specified properly. \n", argv[0]);
+		return;
 	}
 
 	command = malloc (strlen (c) + 16) ;
