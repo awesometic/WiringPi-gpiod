@@ -99,7 +99,6 @@ char isGpiodInstalled();
 void initGpiod(struct libodroid *libwiring);
 
 int _makeSureToUsephyPin(int pin);
-void _closeIfRequested(struct gpiod_line *line);
 
 int _gpiod_getPUPD (int pin);
 int _gpiod_pullUpDnControl (int pin, int pud);
@@ -121,11 +120,6 @@ int _makeSureToUsePhyPin(int pin) {
 		msg(MSG_ERR, "%s: Current mode is not supported for using gpiod.\n", __func__);
 
 	return -1;
-}
-
-void _closeIfRequested(struct gpiod_line *line) {
-	if (gpiod_line_is_requested(line))
-		gpiod_line_release(line);
 }
 
 char isGpiodInstalled() {
@@ -185,7 +179,6 @@ void initGpiod(struct libodroid *libwiring) {
 
 		if ((line = gpiod_line_find(lineName)) == NULL)
 			continue;
-		_closeIfRequested(line);
 
 		_gpiodLines[i] = line;
 	}
@@ -300,8 +293,6 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 	if ((line = _gpiodLines[phyPin]) == NULL)
 		return -1;
 
-	_closeIfRequested(line);
-
 	softPwmStop(phyPin);
 	softToneStop(phyPin);
 
@@ -346,6 +337,7 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 		break;
 	}
 
+	gpiod_line_release(line);
 	return 0;
 }
 
