@@ -293,6 +293,16 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 	softToneStop(phyPin);
 
 	switch (mode) {
+	case SOFT_PWM_OUTPUT:
+		return softPwmCreate(phyPin, 0, 100);
+	case SOFT_TONE_OUTPUT:
+		return softToneCreate(phyPin);
+	default:
+		break;
+	}
+
+	gpiod_line_release(line);
+	switch (mode) {
 	case INPUT:
 		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_IN], 0) < 0) {
 			msg(MSG_ERR, "%s: Error on setting direction of the pin physical #%d.\n", __func__, phyPin);
@@ -323,15 +333,11 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 			return -1;
 		}
 		break;
-	case SOFT_PWM_OUTPUT:
-		return softPwmCreate(phyPin, 0, 100);
-	case SOFT_TONE_OUTPUT:
-		return softToneCreate(phyPin);
 	default:
-		break;
+		msg(MSG_ERR, "%s: Unknown requested mode.\n", __func__);
+		return -1;
 	}
 
-	gpiod_line_release(line);
 	return 0;
 }
 
