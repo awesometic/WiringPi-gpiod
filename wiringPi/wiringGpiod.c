@@ -245,6 +245,12 @@ UNU int _gpiod_digitalRead(int pin) {
 	if ((line = _gpiodLines[phyPin]) == NULL)
 		return -1;
 
+	gpiod_line_release(line);
+	if (gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_ASIS], 0) < 0) {
+		msg(MSG_ERR, "%s: Error on getting request of the pin physical #%d.\n", __func__, phyPin);
+		return -1;
+	}
+
 	if ((ret = gpiod_line_get_value(line)) < 0) {
 		msg(MSG_WARN, "%s: Error on getting value of the pin physical #%d.\n", __func__, phyPin);
 		return -1;
@@ -260,6 +266,12 @@ UNU int _gpiod_digitalWrite(int pin, int value) {
 	phyPin = _makeSureToUsePhyPin(pin);
 	if ((line = _gpiodLines[phyPin]) == NULL)
 		return -1;
+
+	gpiod_line_release(line);
+	if (gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_ASIS], 0) < 0) {
+		msg(MSG_ERR, "%s: Error on getting request of the pin physical #%d.\n", __func__, phyPin);
+		return -1;
+	}
 
 	if ((ret = gpiod_line_set_value(line, value)) < 0) {
 		msg(MSG_WARN, "%s: Error on setting value of the pin physical #%d.\n", __func__, phyPin);
