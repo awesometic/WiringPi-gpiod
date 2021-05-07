@@ -73,12 +73,6 @@ const char *_odroidPhyToLine[WPI_PINMAP_SIZE] = {
 static struct gpiod_line *_gpiodLines[WPI_PINMAP_SIZE] = { NULL, };
 
 /*----------------------------------------------------------------------------*/
-// The array has pointers of all of the gpio lines request
-// which are physically accessible
-/*----------------------------------------------------------------------------*/
-static int _gpiodRequests[WPI_PINMAP_SIZE] = { -1, };
-
-/*----------------------------------------------------------------------------*/
 // Stores presets of various configs to set easily when the pin mode
 // about to be changed and back to the original states
 //
@@ -140,7 +134,7 @@ char isGpiodInstalled() {
 }
 
 void initGpiod(struct libodroid *libwiring) {
-	int i, req;
+	int i;
 	const char *lineName;
 	struct gpiod_line *line;
 
@@ -193,11 +187,7 @@ void initGpiod(struct libodroid *libwiring) {
 			continue;
 		_closeIfRequested(line);
 
-		if ((req = gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_ASIS], -1)) < 0)
-			continue;
-
 		_gpiodLines[i] = line;
-		_gpiodRequests[i] = req;
 	}
 
 	libwiring->usingGpiod = TRUE;
@@ -342,7 +332,6 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 		break;
 	}
 
-	_gpiodRequests[phyPin] = req;
 	return 0;
 }
 
