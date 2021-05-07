@@ -298,31 +298,31 @@ UNU int _gpiod_pinMode(int pin, int mode) {
 
 	switch (mode) {
 	case INPUT:
-		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_IN], -1) < 0) {
+		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_IN], 0) < 0) {
 			msg(MSG_ERR, "%s: Error on setting direction of the pin physical #%d.\n", __func__, phyPin);
 			return -1;
 		}
 		break;
 	case OUTPUT:
-		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_OUT], _gpiod_digitalRead(pin)) < 0) {
+		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_DIR_OUT], 1) < 0) {
 			msg(MSG_ERR, "%s: Error on setting direction of the pin physical #%d.\n", __func__, phyPin);
 			return -1;
 		}
 		break;
 	case INPUT_PULLUP:
-		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_PULL_UP], -1) < 0) {
+		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_PULL_UP], 0) < 0) {
 			msg(MSG_ERR, "%s: Error on setting pull status of the pin physical #%d.\n", __func__, phyPin);
 			return -1;
 		}
 		break;
 	case INPUT_PULLDOWN:
-		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_PULL_DOWN], -1) < 0) {
+		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_PULL_DOWN], 0) < 0) {
 			msg(MSG_ERR, "%s: Error on setting pull status of the pin physical #%d.\n", __func__, phyPin);
 			return -1;
 		}
 		break;
 	case INPUT_PULLOFF:
-		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_PULL_DISABLED], -1) < 0) {
+		if (gpiod_line_request(line, _gpiodReqConfigs[CONF_PULL_DISABLED], 0) < 0) {
 			msg(MSG_ERR, "%s: Error on setting pull status of the pin physical #%d.\n", __func__, phyPin);
 			return -1;
 		}
