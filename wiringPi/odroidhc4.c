@@ -525,7 +525,10 @@ static void init_gpio_mmap (void)
 					strerror (errno));
 			}
 			setUsingGpiomem(TRUE);
-		} else if (isGpiodInstalled()) {
+		} else if (cmpKernelVersion(
+			WPI_GPIOD_MIN_KERN_VER_MAJOR,
+			WPI_GPIOD_MIN_KERN_VER_MINOR
+			) && isGpiodInstalled()) {
 			initGpiod(libwiring);
 			return;
 		} else

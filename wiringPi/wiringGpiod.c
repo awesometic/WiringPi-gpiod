@@ -138,8 +138,10 @@ void initGpiod(struct libodroid *libwiring) {
 	if (!isGpiodInstalled())
 		msg(MSG_ERR, "It seems this system hasn't libgpiod library.\n\tInstall that first and try again.\n");
 
-	if (wiringPiDebug)
+	if (wiringPiDebug) {
 		printf("%s: %4d: About to initialize gpiod mode\n", __func__, __LINE__);
+		printf("Required libgpiod version : %s\n", WPI_LIBGPIOD_VER);
+	}
 
 	for (i = 0; i < CONF_NUM_OF_TYPES; i++) {
 		_gpiodReqConfigs[i] = (struct gpiod_line_request_config *) malloc(sizeof(struct gpiod_line_request_config));

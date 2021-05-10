@@ -30,6 +30,14 @@ extern "C" {
 
 #define WPI_GPIOD_CONSUMER_NAME	"WiringPi"
 
+/*
+ * Define kernel version for the specified libgpiod version
+ * If this isn't regarded, implmented functions using gpiod might not work
+ */
+#define WPI_LIBGPIOD_VER		"1.6.2"
+#define WPI_GPIOD_MIN_KERN_VER_MAJOR	5
+#define WPI_GPIOD_MIN_KERN_VER_MINOR	5
+
 extern char isGpiodInstalled();
 extern void initGpiod(struct libodroid *libwiring);
 

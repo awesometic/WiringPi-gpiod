@@ -678,7 +678,11 @@ static void init_gpio_mmap (struct libodroid *libwiring)
 					strerror (errno));
 			}
 			setUsingGpiomem(TRUE);
-		} else if (isGpiodInstalled()) {
+		} else if (cmpKernelVersion(
+			KERN_NUM_TO_MINOR,
+			WPI_GPIOD_MIN_KERN_VER_MAJOR,
+			WPI_GPIOD_MIN_KERN_VER_MINOR
+			) && isGpiodInstalled()) {
 			initGpiod(libwiring);
 			return;
 		} else
