@@ -874,7 +874,16 @@ static void doVersion (char *argv [])
 	// User level GPIO is GO
 	if (stat ("/dev/gpiomem", &statBuf) == 0)
 		printf ("  * Supports user-level GPIO access.\n") ;
-	else
+	else if (cmpKernelVersion(
+		KERN_NUM_TO_MINOR,
+		WPI_GPIOD_MIN_KERN_VER_MAJOR,
+		WPI_GPIOD_MIN_KERN_VER_MINOR
+		) && isGpiodInstalled()) {
+		printf("  * gpiod mode is enabled.\n");
+		printf("  *--> Currently not all the functions working on gpiod mode.\n");
+		printf("  *--> If the implemented functions are not working well, check the installed libgpiod version.\n");
+		printf("  *--> Required libgpiod-dev version: %s\n", WPI_LIBGPIOD_VER);
+	} else
 		printf ("  * Root or sudo required for GPIO access.\n") ;
 }
 
