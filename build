@@ -103,11 +103,9 @@ reload_udev() {
 }
 
 install() {
-  echo "wiringPi Build script"
+  echo "Install WiringPi..."
   echo "====================="
-  echo
 
-  echo
   echo "WiringPi Library"
   cd wiringPi
   if [ x$1 = "xstatic" ]; then
@@ -177,6 +175,9 @@ install() {
 }
 
 uninstall() {
+  echo "Uninstall WiringPi..."
+  echo "====================="
+
   cd wiringPi
   echo -n "wiringPi: " ; $sudo $make uninstall
   cd ../devLib
@@ -187,9 +188,16 @@ uninstall() {
   configure_periphs uninstall
   configure_gpiomem uninstall
   reload_udev
+
+  echo ""
+  echo All Done
+  echo ""
 }
 
 clean() {
+  echo "Clean up..."
+  echo "====================="
+
   cd wiringPi
   echo -n "wiringPi:   "	; $make clean
   cd ../devLib
@@ -209,6 +217,10 @@ clean() {
   cd ../scrollPhat
   echo -n "scrollPhat: "	; $make clean
   cd ../..
+
+  echo ""
+  echo All Done
+  echo ""
 }
 
 if [ x$1 = "xclean" ]; then
@@ -225,5 +237,9 @@ if [ x$1 != "x" ]; then
   echo "Usage: $0 [clean | uninstall]"
   exit 1
 fi
+
+echo "wiringPi Build script"
+echo "====================="
+echo ""
 
 uninstall; clean; install
