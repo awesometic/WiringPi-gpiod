@@ -22,7 +22,6 @@
 
 /*----------------------------------------------------------------------------*/
 #include "wiringPi.h"
-#include "wiringGpiod.h"
 #include "odroidc2.h"
 
 /*----------------------------------------------------------------------------*/
@@ -178,7 +177,7 @@ static unsigned int	_digitalReadByte	(void);
 /*----------------------------------------------------------------------------*/
 // board init function
 /*----------------------------------------------------------------------------*/
-static 	void init_gpio_mmap	(struct libodroid *libwiring);
+static 	void init_gpio_mmap	(void);
 static 	void init_adc_fds	(void);
 
 	void init_odroidc2 	(struct libodroid *libwiring);
@@ -684,7 +683,7 @@ UNU static unsigned int _digitalReadByte (void)
 }
 
 /*----------------------------------------------------------------------------*/
-static void init_gpio_mmap (struct libodroid *libwiring)
+static void init_gpio_mmap ()
 {
 	int fd = -1;
 	void *mapped;
@@ -703,13 +702,6 @@ static void init_gpio_mmap (struct libodroid *libwiring)
 					strerror (errno));
 			}
 			setUsingGpiomem(TRUE);
-		} else if (cmpKernelVersion(
-			KERN_NUM_TO_MINOR,
-			WPI_GPIOD_MIN_KERN_VER_MAJOR,
-			WPI_GPIOD_MIN_KERN_VER_MINOR
-			) && isGpiodInstalled()) {
-			initGpiod(libwiring);
-			return;
 		} else
 			msg (MSG_ERR,
 				"wiringPiSetup: Neither /dev/gpiomem nor libgpiod-dev doesn't exist. Please try with sudo .\n");
@@ -775,7 +767,7 @@ void init_odroidc2 (struct libodroid *libwiring)
 	/* specify pin base number */
 	libwiring->pinBase		= C2_GPIO_PIN_BASE;
 
-	init_gpio_mmap(libwiring);
+	init_gpio_mmap();
 	init_adc_fds();
 
 	/* global variable setup */

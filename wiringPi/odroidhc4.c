@@ -525,12 +525,6 @@ static void init_gpio_mmap (void)
 					strerror (errno));
 			}
 			setUsingGpiomem(TRUE);
-		} else if (cmpKernelVersion(
-			WPI_GPIOD_MIN_KERN_VER_MAJOR,
-			WPI_GPIOD_MIN_KERN_VER_MINOR
-			) && isGpiodInstalled()) {
-			initGpiod(libwiring);
-			return;
 		} else
 			msg (MSG_ERR,
 				"wiringPiSetup: /dev/gpiomem doesn't exist. Please try again with sudo.\n");
