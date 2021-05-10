@@ -696,7 +696,12 @@ static void init_gpio_mmap (struct libodroid *libwiring)
 				"wiringPiSetup: Unable to open /dev/mem: %s\n",
 				strerror (errno));
 	} else {
-		if (access("/dev/gpiomem",0) == 0 && (fd = open ("/dev/gpiomem", O_RDWR | O_SYNC | O_CLOEXEC) ) < 0) {
+		if (access("/dev/gpiomem",0) == 0) {
+			if ((fd = open ("/dev/gpiomem", O_RDWR | O_SYNC | O_CLOEXEC)) < 0) {
+				msg(MSG_ERR,
+					"wiringPiSetup: Unable to open /dev/gpiomem: %s\n",
+					strerror (errno));
+			}
 			setUsingGpiomem(TRUE);
 		} else if (isGpiodInstalled()) {
 			initGpiod(libwiring);
