@@ -86,11 +86,6 @@ configure_gpiomem() {
         echo "This system seems not ODROID"
         ;;
     esac
-
-    echo "Reload udev..."
-    [ -x "$(command -v udevadm)" ] \
-      && $sudo udevadm trigger \
-      || echo "udevadm not found. Please reboot to take effect"
   elif [ "$1" = "uninstall" ]; then
     echo "Deconfigure /dev/gpiomem"
     $sudo rm -f /etc/udev/rules.d/99-odroid-wiringpi-*
@@ -98,6 +93,13 @@ configure_gpiomem() {
     echo "Not found $GPIOMEM"
     echo "You will not be able to use WiringPi without root permission unless use gpiod"
   fi
+}
+
+reload_udev() {
+  echo "Reload udev..."
+  [ -x "$(command -v udevadm)" ] \
+    && $sudo udevadm trigger \
+    || echo "udevadm not found. Please reboot to take effect"
 }
 
 install() {
@@ -160,6 +162,7 @@ install() {
   cd ..
   configure_periphs
   configure_gpiomem
+  reload_udev
 
   echo
   echo All Done.
@@ -183,7 +186,7 @@ uninstall() {
   cd ..
   configure_periphs uninstall
   configure_gpiomem uninstall
-  echo
+  reload_udev
 }
 
 clean() {
