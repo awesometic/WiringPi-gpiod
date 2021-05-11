@@ -13,6 +13,21 @@ case "$1" in
 			rm -rf /usr/local/include/wiring*.h
 		fi
 
+		msg "Adding groups for using peripherals...: gpio smbus pwm"
+		for group in gpio smbus pwm; do
+			if getent group $group > /dev/null 2>&1; then
+				msg "$group already exists."
+			else
+				addgroup $group
+			fi
+			if getent passwd "odroid" > /dev/null 2>&1; then
+				msg "Adding $group group to the default odroid user..."
+				usermod -aG $group "odroid" 2> /dev/null
+			fi
+		done
+		msg "!! You should add those gpio, smbus, pwm groups to your user account"
+		msg "!! for using gpiod and I2C, SPI, PWM in the user space"
+
 		msg "Installing udev rules to get the handles for peripherals to user space..."
 		cp -f /tmp/odroid-wiringpi/rules.d/10-odroid-periphs.rules /etc/udev/rules.d/
 
