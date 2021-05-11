@@ -59,16 +59,16 @@ case "$1" in
 					msg "Not found $GPIOMEM_PATH"
 					msg "You will not be able to use WiringPi without root permission unless use gpiod"
 				fi
-
-				msg "Reload udev..."
-				[ -x "$(command -v udevadm)" ] \
-					&& udevadm trigger \
-					|| msg "udevadm not found. Please reboot to take effect"
 				;;
 			*)
 				msg "This board seems not Odroid"
 				;;
 		esac
+
+		msg "Reload udev..."
+		[ -x "$(command -v udevadm)" ] \
+			&& udevadm trigger \
+			|| msg "udevadm not found. Please reboot to take effect"
 
 		msg "Remove temporary files..."
 		rm -rf /tmp/odroid-wiringpi
